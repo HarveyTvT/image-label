@@ -80,7 +80,7 @@ func main() {
 	http.HandleFunc("/label", labelHandler)
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir(imagesDir))))
 
-	port := ":8080"
+	port := ":18081"
 	fmt.Printf("Server starting on http://localhost%s\n", port)
 	log.Fatal(http.ListenAndServe(port, nil))
 }
@@ -193,7 +193,6 @@ func createResultZip() error {
 				log.Printf("Added to zip: %s", relPath)
 				return nil
 			})
-
 			if err != nil {
 				log.Printf("Error processing directory %s: %v", labelDir, err)
 			}
