@@ -55,11 +55,6 @@ func main() {
 	}
 	log.Printf("Loaded %d label choices", len(labelChoices))
 
-	// Clean label subfolders from previous runs
-	if err := cleanLabelSubfolders(); err != nil {
-		log.Printf("Warning: Failed to clean label subfolders: %v", err)
-	}
-
 	// Setup signal handling for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
@@ -110,27 +105,6 @@ func loadLabelChoices(filename string) ([]string, error) {
 	}
 
 	return labels, nil
-}
-
-func cleanLabelSubfolders() error {
-	entries, err := os.ReadDir(imagesDir)
-	if err != nil {
-		return err
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() {
-			// Remove all subdirectories in the images folder
-			dirPath := filepath.Join(imagesDir, entry.Name())
-			if err := os.RemoveAll(dirPath); err != nil {
-				log.Printf("Failed to remove directory %s: %v", dirPath, err)
-			} else {
-				log.Printf("Cleaned label subfolder: %s", entry.Name())
-			}
-		}
-	}
-
-	return nil
 }
 
 func createResultZip() error {
