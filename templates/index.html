@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Labeling Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .pagination {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .pagination a {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 0 5px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .pagination a:hover {
+            background-color: #0056b3;
+        }
+
+        .pagination a.disabled {
+            background-color: #ccc;
+            pointer-events: none;
+        }
+
+        .pagination .current {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 0 10px;
+            color: #333;
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .image-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+
+        .image-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .image-container {
+            width: 100%;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            overflow: hidden;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .image-name {
+            padding: 10px 15px;
+            font-size: 14px;
+            color: #666;
+            border-bottom: 1px solid #eee;
+            word-break: break-all;
+        }
+
+        .labels {
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .label-btn {
+            padding: 12px;
+            border: 2px solid #007bff;
+            background-color: white;
+            color: #007bff;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .label-btn:hover {
+            background-color: #007bff;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .label-btn:active {
+            transform: scale(0.98);
+        }
+
+        .label-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .image-card.removing {
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.3s ease-out;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h2 {
+            margin-bottom: 10px;
+            color: #999;
+        }
+
+        @media (max-width: 768px) {
+            .images-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Labeling Tool</h1>
+
+        {{if .Images}}
+        <div class="pagination">
+            {{if gt .CurrentPage 1}}
+                <a href="/?page={{sub .CurrentPage 1}}">&laquo; Previous</a>
+            {{else}}
+                <a class="disabled">&laquo; Previous</a>
+            {{end}}
+
+            <span class="current">Page {{.CurrentPage}} of {{.TotalPages}}</span>
+
+            {{if lt .CurrentPage .TotalPages}}
+                <a href="/?page={{add .CurrentPage 1}}">Next &raquo;</a>
+            {{else}}
+                <a class="disabled">Next &raquo;</a>
+            {{end}}
+        </div>
+
+        <div class="images-grid">
+            {{range .Images}}
+            <div class="image-card">
+                <div class="image-container">
+                    <img src="/images/{{.}}" alt="{{.}}" loading="lazy">
+                </div>
+                <div class="image-name">{{.}}</div>
+                <form method="POST" action="/label" class="labels">
+                    <input type="hidden" name="image" value="{{.}}">
+                    <input type="hidden" name="page" value="{{$.CurrentPage}}">
+                    {{range $.Labels}}
+                    <button type="submit" name="label" value="{{.Index}}" class="label-btn">{{.Text}}</button>
+                    {{end}}
+                </form>
+            </div>
+            {{end}}
+        </div>
+
+        <div class="pagination">
+            {{if gt .CurrentPage 1}}
+                <a href="/?page={{sub .CurrentPage 1}}">&laquo; Previous</a>
+            {{else}}
+                <a class="disabled">&laquo; Previous</a>
+            {{end}}
+
+            <span class="current">Page {{.CurrentPage}} of {{.TotalPages}}</span>
+
+            {{if lt .CurrentPage .TotalPages}}
+                <a href="/?page={{add .CurrentPage 1}}">Next &raquo;</a>
+            {{else}}
+                <a class="disabled">Next &raquo;</a>
+            {{end}}
+        </div>
+        {{else}}
+        <div class="empty-state">
+            <h2>No Images Found</h2>
+            <p>Please add images to the "images" folder and refresh the page.</p>
+        </div>
+        {{end}}
+    </div>
+
+    <script>
+        // Handle button clicks with AJAX
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.label-btn');
+
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    const form = button.closest('form');
+                    const card = form.closest('.image-card');
+                    const formButtons = form.querySelectorAll('.label-btn');
+
+                    // Get form data and add the clicked button's value
+                    const formData = new FormData(form);
+                    formData.set('label', button.value);
+
+                    // Disable all buttons to prevent double-submission
+                    formButtons.forEach(btn => btn.disabled = true);
+
+                    // Send AJAX request
+                    fetch('/label', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Add removing class for animation
+                            card.classList.add('removing');
+
+                            // Remove the card after animation
+                            setTimeout(() => {
+                                card.remove();
+
+                                // Check if there are no more images
+                                const grid = document.querySelector('.images-grid');
+                                if (grid && grid.children.length === 0) {
+                                    // Reload page to show empty state or next page
+                                    window.location.reload();
+                                }
+                            }, 300);
+                        } else {
+                            response.text().then(text => {
+                                alert('Failed to label image: ' + text);
+                                formButtons.forEach(btn => btn.disabled = false);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to label image. Please try again.');
+                        formButtons.forEach(btn => btn.disabled = false);
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
